@@ -1,5 +1,5 @@
 from aiogram import Router, F
-from aiogram.types import Message
+from aiogram.types import Message, ReplyKeyboardRemove
 from aiogram.fsm.context import FSMContext
 import asyncio
 
@@ -12,6 +12,11 @@ from .workout_fsm import WorkoutStates
 from .commands import send_exercise_card
 
 router = Router()
+
+@router.message(F.text == "✅ Завершил", WorkoutStates.in_progress)
+async def exercise_finished_msg(message: Message, state: FSMContext):
+    await message.answer("Отлично! Сколько повторений ты сделал? (введи цифру)", reply_markup=ReplyKeyboardRemove())
+    await state.set_state(WorkoutStates.waiting_for_reps)
 
 @router.message(WorkoutStates.waiting_for_reps, F.text)
 async def process_reps(message: Message, state: FSMContext):

@@ -36,10 +36,10 @@ async def send_exercise_card(message: Message, state: FSMContext):
     
     text += f"🎯 Цель: {target}!"
 
-    builder = InlineKeyboardBuilder()
-    builder.button(text="✅ Завершил", callback_data="exercise_finished")
+    builder = ReplyKeyboardBuilder()
+    builder.button(text="✅ Завершил")
 
-    await message.answer(text, reply_markup=builder.as_markup(), parse_mode="HTML")
+    await message.answer(text, reply_markup=builder.as_markup(resize_keyboard=True), parse_mode="HTML")
     await state.set_state(WorkoutStates.in_progress)
 
 @router.message(CommandStart())
