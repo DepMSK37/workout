@@ -47,6 +47,11 @@ async def process_reps(message: Message, state: FSMContext):
     # Sleep 60s
     await asyncio.sleep(60)
     
+    # Проверяем, не сбросил ли юзер тренировку во время отдыха
+    current_state = await state.get_state()
+    if current_state != WorkoutStates.resting.state:
+        return
+    
     # Move to next exercise / round
     exercise_idx += 1
     if exercise_idx >= 5:
