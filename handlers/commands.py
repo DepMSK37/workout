@@ -45,24 +45,32 @@ async def send_exercise_card(message: Message, state: FSMContext):
 @router.message(CommandStart())
 async def cmd_start(message: Message):
     user = await get_or_create_user(message.from_user.id)
+    
+    builder = ReplyKeyboardBuilder()
+    builder.button(text="🏋️‍♂️ Начать тренировку")
+    builder.button(text="🔄 Сбросить статистику")
+    builder.adjust(1)
+    
     await message.answer(
         "Привет! Я твой бот для круговых домашних тренировок.\n"
-        "Жми /start_workout, чтобы начать тренировку.\n"
-        "Если нужно всё обнулить, у меня есть команда /reset."
+        "Выбери действие ниже из меню👇",
+        reply_markup=builder.as_markup(resize_keyboard=True)
     )
 
 @router.message(Command("reset"))
+@router.message(F.text == "🔄 Сбросить статистику")
 async def cmd_reset(message: Message, state: FSMContext):
     user = await get_or_create_user(message.from_user.id)
     await reset_user_stats(user.id)
     await state.clear()
     await message.answer(
         "🔄 <b>Статистика полностью сброшена!</b>\n\n"
-        "Все твои рекорды, история подходов и тоннаж были удалены. Можешь начать с чистого листа командой /start_workout.",
+        "Все твои рекорды, история подходов и тоннаж были удалены.",
         parse_mode="HTML"
     )
 
 @router.message(Command("start_workout"))
+@router.message(F.text == "🏋️‍♂️ Начать тренировку")
 async def cmd_start_workout(message: Message, state: FSMContext):
     user = await get_or_create_user(message.from_user.id)
     workout = await start_workout(user.id)
