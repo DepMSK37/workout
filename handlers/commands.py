@@ -3,10 +3,11 @@ from aiogram.types import Message
 from aiogram.filters import CommandStart, Command
 from aiogram.fsm.context import FSMContext
 
-from db.queries import get_or_create_user, start_workout, get_last_exercise_record
+from db.queries import get_or_create_user, start_workout, get_last_exercise_record, reset_user_stats
 from utils.exercises import get_exercise
 from .workout_fsm import WorkoutStates
-from aiogram.utils.keyboard import InlineKeyboardBuilder
+from aiogram.utils.keyboard import InlineKeyboardBuilder, ReplyKeyboardBuilder
+from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 
 router = Router()
 
@@ -44,7 +45,22 @@ async def send_exercise_card(message: Message, state: FSMContext):
 @router.message(CommandStart())
 async def cmd_start(message: Message):
     user = await get_or_create_user(message.from_user.id)
-    await message.answer("Привет! Я твой бот для круговых домашних тренировок.\nДля старта жми /start_workout")
+    await message.answer(
+        "Привет! Я твой бот для круговых домашних тренировок.\n"
+        "Жми /start_workout, чтобы начать тренировку.\n"
+        "Если нужно всё обнулить, у меня есть команда /reset."
+    )
+
+@router.message(Command("reset"))
+async def cmd_reset(message: Message, state: FSMContext):
+    user = await get_or_create_user(message.from_user.id)
+    await reset_user_stats(user.id)
+    await state.clear()
+    await message.answer(
+        "🔄 <b>Статистика полностью сброшена!</b>\n\n"
+        "Все твои рекорды, история подходов и тоннаж были удалены. Можешь начать с чистого листа командой /start_workout.",
+        parse_mode="HTML"
+    )
 
 @router.message(Command("start_workout"))
 async def cmd_start_workout(message: Message, state: FSMContext):

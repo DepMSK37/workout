@@ -1,4 +1,4 @@
-from sqlalchemy import select, func
+from sqlalchemy import select, func, delete
 from .database import AsyncSessionLocal
 from .models import User, Workout, ExerciseLog
 from datetime import datetime
@@ -48,6 +48,16 @@ async def get_last_exercise_record(user_id: int, exercise_name: str):
         )
         result = await session.execute(stmt)
         return result.scalars().first()
+
+async def reset_user_stats(user_id: int):
+    async with AsyncSessionLocal() as session:
+        result = await session.execute(select(Workout.id).where(Workout.user_id == user_id))
+        workout_ids = result.scalars().all()
+        
+        if workout_ids:
+            await session.execute(delete(ExerciseLog).where(ExerciseLog.workout_id.in_(workout_ids)))
+            await session.execute(delete(Workout).where(Workout.id.in_(workout_ids)))
+            await session.commit()
 
 async def get_inactive_users(hours: int = 48):
     # Returns users whose last workout was more than `hours` ago
