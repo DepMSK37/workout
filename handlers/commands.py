@@ -63,9 +63,16 @@ async def cmd_reset(message: Message, state: FSMContext):
     user = await get_or_create_user(message.from_user.id)
     await reset_user_stats(user.id)
     await state.clear()
+    
+    builder = ReplyKeyboardBuilder()
+    builder.button(text="🏋️‍♂️ Начать тренировку")
+    builder.button(text="🔄 Сбросить статистику")
+    builder.adjust(1)
+    
     await message.answer(
         "🔄 <b>Статистика полностью сброшена!</b>\n\n"
         "Все твои рекорды, история подходов и тоннаж были удалены.",
+        reply_markup=builder.as_markup(resize_keyboard=True),
         parse_mode="HTML"
     )
 

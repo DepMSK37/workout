@@ -1,6 +1,7 @@
 from aiogram import Router, F
 from aiogram.types import Message, ReplyKeyboardRemove
 from aiogram.fsm.context import FSMContext
+from aiogram.utils.keyboard import ReplyKeyboardBuilder
 import asyncio
 
 from db.queries import log_exercise, complete_workout
@@ -74,7 +75,13 @@ async def process_reps(message: Message, state: FSMContext):
             f"🔄 Выполнено кругов: 3\n\n"
             f"🍏 <b>Совет для восстановления:</b>\n{tip}"
         )
-        await message.answer(stats_text, parse_mode="HTML")
+        
+        builder = ReplyKeyboardBuilder()
+        builder.button(text="🏋️‍♂️ Начать тренировку")
+        builder.button(text="🔄 Сбросить статистику")
+        builder.adjust(1)
+        
+        await message.answer(stats_text, reply_markup=builder.as_markup(resize_keyboard=True), parse_mode="HTML")
         await state.clear()
     else:
         # Next exercise
