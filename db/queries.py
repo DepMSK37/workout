@@ -59,6 +59,22 @@ async def reset_user_stats(user_id: int):
             await session.execute(delete(Workout).where(Workout.id.in_(workout_ids)))
             await session.commit()
 
+async def get_user_workout_history(user_id: int):
+    async with AsyncSessionLocal() as session:
+        stmt = (
+            select(
+                Workout.completed_at,
+                func.sum(ExerciseLog.reps).label('total_reps')
+            )
+            .join(ExerciseLog, Workout.id == ExerciseLog.workout_id)
+            .where(Workout.user_id == user_id)
+            .where(Workout.completed_at.is_not(None))
+            .group_by(Workout.id)
+            .order_by(Workout.completed_at.asc())
+        )
+        result = await session.execute(stmt)
+        return result.all()
+
 async def get_inactive_users(hours: int = 48):
     # Returns users whose last workout was more than `hours` ago
     # We find the latest workout for each user

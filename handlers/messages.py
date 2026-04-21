@@ -7,6 +7,7 @@ import asyncio
 from db.queries import log_exercise, complete_workout
 from utils.exercises import get_exercise
 from utils.nutrition import get_random_nutrition_tip
+from utils.keyboards import get_main_menu_keyboard
 from .workout_fsm import WorkoutStates
 
 # We will import send_exercise_card from commands avoiding circular if we be careful, or better re-implement/share.
@@ -76,12 +77,7 @@ async def process_reps(message: Message, state: FSMContext):
             f"🍏 <b>Совет для восстановления:</b>\n{tip}"
         )
         
-        builder = ReplyKeyboardBuilder()
-        builder.button(text="🏋️‍♂️ Начать тренировку")
-        builder.button(text="🔄 Сбросить статистику")
-        builder.adjust(1)
-        
-        await message.answer(stats_text, reply_markup=builder.as_markup(resize_keyboard=True), parse_mode="HTML")
+        await message.answer(stats_text, reply_markup=get_main_menu_keyboard(), parse_mode="HTML")
         await state.clear()
     else:
         # Next exercise

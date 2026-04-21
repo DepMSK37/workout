@@ -3,8 +3,9 @@ from aiogram.types import Message
 from aiogram.filters import CommandStart, Command
 from aiogram.fsm.context import FSMContext
 
-from db.queries import get_or_create_user, start_workout, get_last_exercise_record, reset_user_stats
+from db.queries import get_or_create_user, start_workout, get_last_exercise_record, reset_user_stats, get_user_workout_history
 from utils.exercises import get_exercise
+from utils.keyboards import get_main_menu_keyboard
 from .workout_fsm import WorkoutStates
 from aiogram.utils.keyboard import InlineKeyboardBuilder, ReplyKeyboardBuilder
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
@@ -46,15 +47,10 @@ async def send_exercise_card(message: Message, state: FSMContext):
 async def cmd_start(message: Message):
     user = await get_or_create_user(message.from_user.id)
     
-    builder = ReplyKeyboardBuilder()
-    builder.button(text="🏋️‍♂️ Начать тренировку")
-    builder.button(text="🔄 Сбросить статистику")
-    builder.adjust(1)
-    
     await message.answer(
         "Привет! Я твой бот для круговых домашних тренировок.\n"
         "Выбери действие ниже из меню👇",
-        reply_markup=builder.as_markup(resize_keyboard=True)
+        reply_markup=get_main_menu_keyboard()
     )
 
 @router.message(Command("reset"))
@@ -64,17 +60,30 @@ async def cmd_reset(message: Message, state: FSMContext):
     await reset_user_stats(user.id)
     await state.clear()
     
-    builder = ReplyKeyboardBuilder()
-    builder.button(text="🏋️‍♂️ Начать тренировку")
-    builder.button(text="🔄 Сбросить статистику")
-    builder.adjust(1)
-    
     await message.answer(
         "🔄 <b>Статистика полностью сброшена!</b>\n\n"
         "Все твои рекорды, история подходов и тоннаж были удалены.",
-        reply_markup=builder.as_markup(resize_keyboard=True),
+        reply_markup=get_main_menu_keyboard(),
         parse_mode="HTML"
     )
+
+@router.message(F.text == "📊 Моя история")
+async def cmd_history(message: Message):
+    user = await get_or_create_user(message.from_user.id)
+    history = await get_user_workout_history(user.id)
+    
+    if not history:
+        await message.answer("У тебя пока нет завершенных тренировок. Нажми 'Начать тренировку', чтобы сделать первую запись!")
+        return
+
+    text = "📊 <b>Твоя история тренировок:</b>\n\n"
+    for idx, row in enumerate(history, 1):
+        completed_date = row.completed_at.strftime("%d.%m.%Y")
+        total_reps = row.total_reps or 0
+        tonnage = total_reps * 10
+        text += f"🏋️ Тренировка {idx} ({completed_date}): <b>{tonnage} кг</b>\n"
+
+    await message.answer(text, parse_mode="HTML")
 
 @router.message(Command("start_workout"))
 @router.message(F.text == "🏋️‍♂️ Начать тренировку")
