@@ -40,7 +40,25 @@ async def send_exercise_card(message: Message, state: FSMContext):
     builder = ReplyKeyboardBuilder()
     builder.button(text="✅ Завершил")
 
-    await message.answer(text, reply_markup=builder.as_markup(resize_keyboard=True), parse_mode="HTML")
+    import os
+    from aiogram.types import FSInputFile
+    
+    gif_path = exercise.get("gif_path")
+    if gif_path and os.path.exists(gif_path):
+        animation = FSInputFile(gif_path)
+        await message.answer_animation(
+            animation=animation,
+            caption=text,
+            reply_markup=builder.as_markup(resize_keyboard=True),
+            parse_mode="HTML"
+        )
+    else:
+        await message.answer(
+            text, 
+            reply_markup=builder.as_markup(resize_keyboard=True), 
+            parse_mode="HTML"
+        )
+        
     await state.set_state(WorkoutStates.in_progress)
 
 @router.message(CommandStart())
